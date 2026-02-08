@@ -12,14 +12,16 @@ A React application for managing and tracking educational problem sheets with hi
 - Drag-and-drop reordering for all levels
 - Import pre-configured sheets via Codolio API
 - Automatic state persistence to localStorage
+- Undo deletions within 5 seconds
 
 ### User Interface
 - Modal dialogs for adding and editing items
 - Difficulty badges (Easy, Medium, Hard)
 - Question links to external problem URLs
 - Pencil icon for editing with modal forms
-- Delete confirmation dialogs
-- Orange accent color for primary actions
+- Delete confirmation dialogs with undo option
+- Undo notifications (5-second window to restore)
+- Orange accent color for primary actions and stats
 - Custom dark theme (#111010 background, #18181b cards)
 
 ### Technical Implementation
@@ -75,25 +77,26 @@ Note: The import feature fetches data from the Codolio API endpoint, not directl
 
 - Add Topic: Click the + Topic button in the header
 - Edit Topic: Click the pencil icon next to a topic name
-- Delete Topic: Click the delete icon (with confirmation)
+- Delete Topic: Click the delete icon, confirm deletion, optionally undo within 5 seconds
 - Expand/Collapse: Click anywhere on the topic card
-- Reorder: Drag topics by the grip handle
+- Reorder: Drag topics using the always-visible grip handle on the left
 
 ### Managing SubTopics
 
 - Add SubTopic: Hover over a topic and click the + icon
 - Edit SubTopic: Click the pencil icon
-- Delete SubTopic: Click the delete icon
-- Reorder: Drag subtopics within a topic
+- Delete SubTopic: Click the delete icon, confirm deletion, optionally undo
+- Reorder: Drag subtopics using the grip handle
 
 ### Managing Questions
 
 - Add Question: Hover over a subtopic and click the + icon
 - Fill Details: Enter question name, link (optional), and difficulty
 - Edit Question: Click the pencil icon to modify
+- Delete Question: Click the delete icon, confirm deletion, optionally undo
 - Mark Complete: Click the circular checkbox
 - View Link: Click the orange View button if a link exists
-- Reorder: Drag questions within a subtopic
+- Reorder: Drag questions using the grip handle
 
 ### Theme Switching
 
@@ -155,7 +158,9 @@ src/
 │       ├── Card.tsx
 │       ├── CircularProgress.tsx
 │       ├── LoadingSpinner.tsx
-│       └── ProgressBar.tsx
+       ├── ProgressBar.tsx
+       ├── Toast.tsx
+       └── ToastContainer.tsx
 ├── hooks/                 # Custom React hooks
 │   ├── useStore.ts       # Store wrapper hooks
 │   └── useTheme.ts       # Theme management
@@ -235,8 +240,15 @@ src/
 ### Drag and Drop
 - Smooth animations with DnD Kit
 - Visual feedback during drag
-- Grip handles appear on hover
+- Always-visible grip handles on the left side
 - Orange highlight when dragging
+
+### Delete & Undo System
+- Confirmation dialog before deletion
+- 5-second undo window after deletion
+- Toast notification at bottom-right with undo button
+- Restores full state including all child items
+- Automatic permanent deletion after timeout
 
 ### Theme System
 - Persistent theme storage in localStorage

@@ -37,6 +37,21 @@ A React application for managing and tracking educational problem sheets with hi
 ### Prerequisites
 - Node.js 16+ and npm or yarn installed
 
+### Environment Setup
+
+1. Copy the example environment file:
+```bash
+cp .env.example .env
+```
+
+2. Add your API base URL and available sheet slugs to the `.env` file:
+```env
+VITE_API_BASE_URL=your_api_base_url_here
+VITE_AVAILABLE_SHEETS=sheet1-slug,sheet2-slug
+```
+
+Replace `your_api_base_url_here` with the actual API endpoint URL, and add your available sheet slugs as a comma-separated list.
+
 ### Installation
 
 ```bash
@@ -64,14 +79,11 @@ npm run preview
 ### Importing a Sheet
 
 1. Click the Import button in the top header
-2. Enter a sheet slug from the available options
+2. Enter a sheet slug (configured in your `.env` file under `VITE_AVAILABLE_SHEETS`)
 3. Click Import and wait for the data to load
 4. Click Done to start using the sheet
 
-Available sheet slugs:
-- `striver-sde-sheet` - Striver's SDE Sheet with coding problems
-
-Note: The import feature fetches data from the Codolio API endpoint, not directly from Google Sheets URLs. Only pre-configured sheets with valid slugs can be imported.
+The import dialog will show example buttons for any slugs you've added to your environment configuration.
 
 ### Managing Topics
 
@@ -110,8 +122,10 @@ The application integrates with the Codolio Question Tracker API to import pre-c
 
 ### Endpoint
 ```
-https://node.codolio.com/api/question-tracker/v1/sheet/public/get-sheet-by-slug/{slug}
+{API_BASE_URL}/sheet/public/get-sheet-by-slug/{slug}
 ```
+
+The API base URL is configured in the `.env` file.
 
 ### How It Works
 1. User enters a sheet slug (e.g., `striver-sde-sheet`)

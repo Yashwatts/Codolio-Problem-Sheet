@@ -3,8 +3,13 @@ import { transformSheetData, type TransformedSheetData } from '@/utils/transform
 
 /**
  * Base API URL for Codolio Question Tracker
+ * Loaded from environment variable VITE_API_BASE_URL
  */
-const API_BASE_URL = 'https://node.codolio.com/api/question-tracker/v1'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+if (!API_BASE_URL) {
+  throw new Error('VITE_API_BASE_URL is not defined. Please add it to your .env file.')
+}
 
 /**
  * Error thrown when fetching sheet data fails
@@ -162,14 +167,25 @@ export async function fetchAndLoadSheet(
 }
 
 /**
- * Available sheet slugs (add more as needed)
+ * Available sheet slugs (loaded from environment variable)
+ * Format: comma-separated list in VITE_AVAILABLE_SHEETS
  */
-export const AVAILABLE_SHEETS = {
-  STRIVER_SDE: 'striver-sde-sheet',
-  // Add more sheets here as they become available
-} as const
+const getAvailableSheets = (): Record<string, string> => {
+  const sheetsEnv = import.meta.env.VITE_AVAILABLE_SHEETS || ''
+  const sheets = sheetsEnv.split(',').filter(s => s.trim())
+  
+  const result: Record<string, string> = {}
+  sheets.forEach((sheet) => {
+    const key = sheet.trim().toUpperCase().replace(/-/g, '_')
+    result[key] = sheet.trim()
+  })
+  
+  return result
+}
+
+export const AVAILABLE_SHEETS = getAvailableSheets()
 
 /**
  * Type for available sheet slugs
  */
-export type AvailableSheetSlug = typeof AVAILABLE_SHEETS[keyof typeof AVAILABLE_SHEETS]
+export type AvailableSheetSlug = string

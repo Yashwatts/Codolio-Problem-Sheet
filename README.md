@@ -1,4 +1,4 @@
-# Question Sheet Tracker
+# Problem Sheet Tracker
 
 A React application for managing and tracking educational problem sheets with hierarchical organization, progress tracking and API-based sheet import.
 

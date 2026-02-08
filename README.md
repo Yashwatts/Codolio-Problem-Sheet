@@ -1,6 +1,6 @@
 # Question Sheet Tracker
 
-A React application for managing and tracking educational problem sheets with hierarchical organization, progress tracking, and Google Sheets integration.
+A React application for managing and tracking educational problem sheets with hierarchical organization, progress tracking and API-based sheet import.
 
 ## Features
 
@@ -8,10 +8,9 @@ A React application for managing and tracking educational problem sheets with hi
 - Hierarchical three-level structure (Topics → SubTopics → Questions)
 - Visual progress bars and completion statistics
 - Mark questions as complete with circular checkboxes
-- Auto-numbered questions for easy reference
 - Dark and light theme modes with smooth transitions
 - Drag-and-drop reordering for all levels
-- Google Sheets import via API
+- Import pre-configured sheets via Codolio API
 - Automatic state persistence to localStorage
 
 ### User Interface
@@ -62,10 +61,15 @@ npm run preview
 
 ### Importing a Sheet
 
-1. Click the **Import** button in the top header
-2. Enter a sheet slug (e.g., `striver-sde-sheet`)
-3. Click **Import** and wait for the data to load
-4. Click **Done** to start using the sheet
+1. Click the Import button in the top header
+2. Enter a sheet slug from the available options
+3. Click Import and wait for the data to load
+4. Click Done to start using the sheet
+
+Available sheet slugs:
+- `striver-sde-sheet` - Striver's SDE Sheet with coding problems
+
+Note: The import feature fetches data from the Codolio API endpoint, not directly from Google Sheets URLs. Only pre-configured sheets with valid slugs can be imported.
 
 ### Managing Topics
 
@@ -96,6 +100,29 @@ npm run preview
 - Click the Moon icon to switch to dark mode
 - Click the Sun icon to switch to light mode
 - Theme preference is saved automatically
+
+## API Integration
+
+The application integrates with the Codolio Question Tracker API to import pre-configured problem sheets.
+
+### Endpoint
+```
+https://node.codolio.com/api/question-tracker/v1/sheet/public/get-sheet-by-slug/{slug}
+```
+
+### How It Works
+1. User enters a sheet slug (e.g., `striver-sde-sheet`)
+2. App fetches structured data from the Codolio API
+3. Data is transformed into the app's normalized state format
+4. Topics, subtopics, and questions are loaded into the store
+5. All imported data persists to localStorage
+
+### Data Structure
+The API returns:
+- Sheet metadata (name, description)
+- Topics with hierarchical relationships
+- Subtopics grouped under topics
+- Questions with difficulty levels, links, and content
 
 ## Project Structure
 
@@ -222,21 +249,6 @@ src/
 - SSR-safe with fallback handling
 - Preserves completion state
 - Stores entire app state (topics, subtopics, questions)
-
-## Browser Support
-
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-- Mobile browsers (iOS Safari, Chrome Mobile)
-
-## Contributing
-
-This is a completed project for Codolio assignment. For any issues or suggestions:
-
-1. Document the issue clearly
-2. Provide steps to reproduce
-3. Include browser/environment details
 
 ## License
 

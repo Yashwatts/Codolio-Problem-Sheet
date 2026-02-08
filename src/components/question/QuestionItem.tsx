@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { ExternalLink, Check } from 'lucide-react'
 import { useQuestionById } from '@/store/selectors'
 import { useStoreActions } from '@/hooks/useStore'
+import { useQuestionStore } from '@/store/useQuestionStore'
+import { useToastStore } from '@/components/shared'
 import ActionButtons from '@/components/shared/ActionButtons'
 import EditQuestionModal from './EditQuestionModal'
 
@@ -13,6 +15,7 @@ interface QuestionItemProps {
 export default function QuestionItem({ questionId, index }: QuestionItemProps) {
   const question = useQuestionById(questionId)
   const { updateQuestion, deleteQuestion, toggleQuestionCompletion } = useStoreActions()
+  const addToast = useToastStore((state) => state.addToast)
   const [showEditModal, setShowEditModal] = useState(false)
   
   if (!question) return null
@@ -24,6 +27,41 @@ export default function QuestionItem({ questionId, index }: QuestionItemProps) {
   const handleSave = (content: string, link: string, difficulty: 'easy' | 'medium' | 'hard') => {
     updateQuestion(questionId, { content, answer: link, difficulty })
     setShowEditModal(false)
+  }
+  
+  const handleDelete = () => {
+    // Capture state before deletion for undo
+    const state = useQuestionStore.getState()
+    const deletedQuestion = { ...state.questions[questionId] }
+    let parentSubTopicId: string | null = null
+    let questionIndex = -1
+    
+    // Find parent subtopic and index
+    Object.values(state.subTopics).forEach((subTopic) => {
+      const idx = subTopic.questionIds.indexOf(questionId)
+      if (idx !== -1) {
+        parentSubTopicId = subTopic.id
+        questionIndex = idx
+      }
+    })
+    
+    // Delete the question
+    deleteQuestion(questionId)
+    
+    // Show undo toast
+    addToast({
+      message: `Deleted "${deletedQuestion.content}"`,
+      onUndo: () => {
+        // Restore the question
+        useQuestionStore.setState((state) => {
+          state.questions[questionId] = deletedQuestion
+          if (parentSubTopicId && questionIndex !== -1) {
+            state.subTopics[parentSubTopicId].questionIds.splice(questionIndex, 0, questionId)
+          }
+        })
+      },
+      duration: 5000
+    })
   }
   
   const difficultyColors = {
@@ -88,8 +126,9 @@ export default function QuestionItem({ questionId, index }: QuestionItemProps) {
       <div onClick={(e) => e.stopPropagation()}>
         <ActionButtons 
           onEdit={handleEdit}
-          onDelete={() => deleteQuestion(questionId)}
-          confirmDelete={false}
+          onDelete={handleDelete}
+          confirmDelete
+          deleteMessage={`Delete "${question.content}"?`}
           size="sm"
         />
       </div>

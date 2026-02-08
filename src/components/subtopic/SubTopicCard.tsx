@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { ChevronRight, ChevronDown, Plus } from 'lucide-react'
 import { useSubTopicById, useQuestionIdsBySubTopicId, useSubTopicProgress } from '@/store/selectors'
 import { useStoreActions, useSubTopicManager } from '@/hooks/useStore'
+import { useQuestionStore } from '@/store/useQuestionStore'
+import { useToastStore } from '@/components/shared'
 import Card, { CardHeader, CardBody } from '@/components/shared/Card'
 import ActionButtons from '@/components/shared/ActionButtons'
 import ProgressBar from '@/components/shared/ProgressBar'
@@ -35,6 +37,7 @@ export default function SubTopicCard({ subTopicId, isExpanded: controlledExpande
   const progress = useSubTopicProgress(subTopicId)
   const { updateSubTopic, deleteSubTopic, reorderQuestions } = useStoreActions()
   const { addQuestion } = useSubTopicManager(subTopicId)
+  const addToast = useToastStore((state) => state.addToast)
   
   const [localExpanded, setLocalExpanded] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -73,6 +76,51 @@ export default function SubTopicCard({ subTopicId, isExpanded: controlledExpande
   
   const toggleExpand = () => {
     setLocalExpanded(!localExpanded)
+  }
+  
+  const handleDelete = () => {
+    // Capture state before deletion for undo
+    const state = useQuestionStore.getState()
+    const deletedSubTopic = state.subTopics[subTopicId]
+    const deletedQuestions: Record<string, any> = {}
+    let parentTopicId: string | null = null
+    let subTopicIndex = -1
+    
+    // Find parent topic and index
+    Object.values(state.topics).forEach((topic) => {
+      const idx = topic.subTopicIds.indexOf(subTopicId)
+      if (idx !== -1) {
+        parentTopicId = topic.id
+        subTopicIndex = idx
+      }
+    })
+    
+    // Capture all questions
+    deletedSubTopic.questionIds.forEach((questionId: string) => {
+      const question = state.questions[questionId]
+      if (question) {
+        deletedQuestions[questionId] = { ...question }
+      }
+    })
+    
+    // Delete the subtopic
+    deleteSubTopic(subTopicId)
+    
+    // Show undo toast
+    addToast({
+      message: `Deleted "${deletedSubTopic.name}"`,
+      onUndo: () => {
+        // Restore the subtopic
+        useQuestionStore.setState((state) => {
+          state.subTopics[subTopicId] = deletedSubTopic
+          Object.assign(state.questions, deletedQuestions)
+          if (parentTopicId && subTopicIndex !== -1) {
+            state.topics[parentTopicId].subTopicIds.splice(subTopicIndex, 0, subTopicId)
+          }
+        })
+      },
+      duration: 5000
+    })
   }
   
   return (
@@ -115,7 +163,7 @@ export default function SubTopicCard({ subTopicId, isExpanded: controlledExpande
           </button>
           <ActionButtons 
             onEdit={handleEdit}
-            onDelete={() => deleteSubTopic(subTopicId)}
+            onDelete={handleDelete}
             confirmDelete
             deleteMessage={`Delete "${subTopic.name}"?`}
           />

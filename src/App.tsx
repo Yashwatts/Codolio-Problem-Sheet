@@ -3,6 +3,7 @@ import { Download, Sun, Moon, Plus } from 'lucide-react'
 import TopicList from './components/topic/TopicList'
 import ImportSheet from './pages/ImportSheet'
 import AddTopicModal from './components/topic/AddTopicModal'
+import { ToastContainer } from './components/shared'
 import { useTheme } from './hooks'
 import { useOverallProgress, useCounts } from './store/selectors'
 import { useStoreActions } from './hooks/useStore'
@@ -31,7 +32,7 @@ function App() {
                 Problem Sheet
               </h1>
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                {completed}/{total} questions · {topics} {topics === 1 ? 'topic' : 'topics'}
+                <span className="text-orange-600 dark:text-orange-400 font-medium">{completed}</span>/<span className="text-orange-600 dark:text-orange-400 font-medium">{total}</span> questions · <span className="text-orange-600 dark:text-orange-400 font-medium">{topics}</span> {topics === 1 ? 'topic' : 'topics'}
               </div>
             </div>
             
@@ -86,6 +87,9 @@ function App() {
           onCancel={() => setShowAddTopic(false)}
         />
       )}
+
+      {/* Toast Notifications */}
+      <ToastContainer />
     </div>
   )
 }

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { ChevronRight, ChevronDown, Plus } from 'lucide-react'
 import { useTopicById, useSubTopicIdsByTopicId, useTopicProgress } from '@/store/selectors'
 import { useStoreActions, useTopicManager } from '@/hooks/useStore'
+import { useQuestionStore } from '@/store/useQuestionStore'
+import { useToastStore } from '@/components/shared'
 import Card, { CardHeader, CardBody } from '@/components/shared/Card'
 import ActionButtons from '@/components/shared/ActionButtons'
 import ProgressBar from '@/components/shared/ProgressBar'
@@ -37,6 +39,7 @@ export default function TopicCard({ topicId, isExpanded: controlledExpanded, onT
   const progress = useTopicProgress(topicId)
   const { updateTopic, deleteTopic, reorderSubTopics } = useStoreActions()
   const { addSubTopic } = useTopicManager(topicId)
+  const addToast = useToastStore((state) => state.addToast)
   
   const [localExpanded, setLocalExpanded] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -81,6 +84,47 @@ export default function TopicCard({ topicId, isExpanded: controlledExpanded, onT
     }
   }
   
+  const handleDelete = () => {
+    // Capture state before deletion for undo
+    const state = useQuestionStore.getState()
+    const deletedTopic = state.topics[topicId]
+    const deletedSubTopics: Record<string, any> = {}
+    const deletedQuestions: Record<string, any> = {}
+    const topicIndex = state.topicOrder.indexOf(topicId)
+    
+    // Capture all sub-topics and questions
+    deletedTopic.subTopicIds.forEach((subTopicId: string) => {
+      const subTopic = state.subTopics[subTopicId]
+      if (subTopic) {
+        deletedSubTopics[subTopicId] = { ...subTopic }
+        subTopic.questionIds.forEach((questionId: string) => {
+          const question = state.questions[questionId]
+          if (question) {
+            deletedQuestions[questionId] = { ...question }
+          }
+        })
+      }
+    })
+    
+    // Delete the topic
+    deleteTopic(topicId)
+    
+    // Show undo toast
+    addToast({
+      message: `Deleted "${deletedTopic.name}"`,
+      onUndo: () => {
+        // Restore the topic
+        useQuestionStore.setState((state) => {
+          state.topics[topicId] = deletedTopic
+          Object.assign(state.subTopics, deletedSubTopics)
+          Object.assign(state.questions, deletedQuestions)
+          state.topicOrder.splice(topicIndex, 0, topicId)
+        })
+      },
+      duration: 5000
+    })
+  }
+  
   return (
     <Card className="mb-4 p-5">
       <CardHeader className="cursor-pointer group" onClick={handleToggle}>
@@ -117,7 +161,7 @@ export default function TopicCard({ topicId, isExpanded: controlledExpanded, onT
           </button>
           <ActionButtons 
             onEdit={handleEdit}
-            onDelete={() => deleteTopic(topicId)}
+            onDelete={handleDelete}
             confirmDelete
             deleteMessage={`Delete "${topic.name}"?`}
           />

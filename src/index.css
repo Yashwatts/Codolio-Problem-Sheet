@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --theme-transition: 300ms ease-in-out;
+  }
+  
+  /* Apply uniform transitions to all elements */
+  html,
+  body,
+  #root,
+  *,
+  *::before,
+  *::after {
+    transition: background-color var(--theme-transition),
+                color var(--theme-transition),
+                border-color var(--theme-transition),
+                fill var(--theme-transition),
+                stroke var(--theme-transition) !important;
+  }
+  
+  /* Preserve necessary animations */
+  [class*="animate-"] {
+    transition: none !important;
+  }
+  
+  /* Keep opacity transitions separate for hover effects */
+  .opacity-0,
+  .opacity-50,
+  .opacity-100,
+  [class*="group-hover"] {
+    transition: background-color var(--theme-transition),
+                color var(--theme-transition),
+                border-color var(--theme-transition),
+                opacity 100ms ease-in-out !important;
+  }
+}
